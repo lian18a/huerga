@@ -1,0 +1,100 @@
+Шаг 1: Разбиение выражения на токены
+python
+Copy code
+import re
+
+class Tokenizer:
+    def init(self, expression):
+        self.expression = expression
+        self.tokens = self.tokenize()
+
+    def tokenize(self):
+        # Разбиваем выражение на токены (числа, операторы, скобки)
+        pattern = r'\d+\.\d+|\d+|[-+*/()]'
+        tokens = re.findall(pattern, self.expression)
+        return tokens
+Шаг 2: Преобразование в обратную польскую нотацию
+python
+Copy code
+class RPNConverter:
+    def init(self, tokens):
+        self.tokens = tokens
+        self.precedence = {'+': 1, '-': 1, '*': 2, '/': 2, '(': 0}
+    
+    def to_rpn(self):
+        output = []
+        stack = []
+
+        for token in self.tokens:
+            if token.isdigit() or '.' in token:
+                output.append(token)
+            elif token in self.precedence:
+                while (stack and self.precedence[token] <= self.precedence[stack[-1]]) and stack[-1] != '(':
+                    output.append(stack.pop())
+                stack.append(token)
+            elif token == '(':
+                stack.append(token)
+            elif token == ')':
+                while stack and stack[-1] != '(':
+                    output.append(stack.pop())
+                stack.pop()
+
+        while stack:
+            output.append(stack.pop())
+
+        return output
+Шаг 3: Вычисление результата из обратной польской нотации
+python
+Copy code
+class Calculator:
+    def init(self, rpn_expression):
+        self.rpn_expression = rpn_expression
+    
+    def calculate(self):
+        stack = []
+
+        for token in self.rpn_expression:
+            if token.isdigit() or ('.' in token):
+                stack.append(float(token))
+            elif token in ('+', '-', '*', '/'):
+                num2 = stack.pop()
+                num1 = stack.pop()
+
+                if token == '+':
+                    stack.append(num1 + num2)
+                elif token == '-':
+                    stack.append(num1 - num2)
+                elif token == '*':
+                    stack.append(num1 * num2)
+                elif token == '/':
+                    if num2 == 0:
+                        return "Ошибка: деление на ноль"
+                    stack.append(num1 / num2)
+
+        return stack[0] if stack else "Ошибка: некорректное выражение"
+Шаг 4: Реализация HTTP-API с использованием Flask
+python
+Copy code
+from flask import Flask, request, jsonify
+
+app = Flask(name)
+
+@app.route('/calculate', methods=['POST'])
+def calculate_expression():
+    data = request.get_json()
+    expression = data['expression']
+
+    tokenizer = Tokenizer(expression)
+    tokens = tokenizer.tokens
+
+    converter = RPNConverter(tokens)
+    rpn_expression = converter.to_rpn()
+
+    calculator = Calculator(rpn_expression)
+    result = calculator.calculate()
+
+    return jsonify({'result': result})
+
+if name == 'main':
+    app.run(debug=True)
+Это базовая структура программы. Можно отправлять POST-запросы на /calculate с выражением в формате JSON для получения результата.
